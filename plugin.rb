@@ -6,11 +6,14 @@
 require_dependency 'auth/oauth2_authenticator'
 
 class MeetupAuthenticator < ::Auth::OAuth2Authenticator
+  CLIENT_ID = ENV['MEETUP_APP_ID']
+  CLIENT_SECRET = ENV['MEETUP_SECRET']
+
   def register_middleware(omniauth)
     omniauth.provider :oauth2,
                       :name => 'meetup',
-                      :client_id => GlobalSetting.meetup_client_id,
-                      :client_secret => GlobalSetting.meetup_client_secret,
+                      :client_id => CLIENT_ID,
+                      :client_secret => CLIENT_SECRET,
                       :scope => 'AccountInfoFull',
                       :provider_ignores_state => true,
                       :client_options => {
