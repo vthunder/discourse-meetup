@@ -1,22 +1,22 @@
-# name: discourse-dwolla
-# about: dwolla login provider
+# name: discourse-meetup
+# about: meetup login provider
 # version: 0.1
-# author: Robin Ward
+# author: Robin Ward, Dan Mills
 
 require_dependency 'auth/oauth2_authenticator'
 
-class DwollaAuthenticator < ::Auth::OAuth2Authenticator
+class MeetupAuthenticator < ::Auth::OAuth2Authenticator
   def register_middleware(omniauth)
     omniauth.provider :oauth2,
-                      :name => 'dwolla',
-                      :client_id => GlobalSetting.dwolla_client_id,
-                      :client_secret => GlobalSetting.dwolla_client_secret,
+                      :name => 'meetup',
+                      :client_id => GlobalSetting.meetup_client_id,
+                      :client_secret => GlobalSetting.meetup_client_secret,
                       :scope => 'AccountInfoFull',
                       :provider_ignores_state => true,
                       :client_options => {
-                        :site => 'https://www.dwolla.com',
-                        :authorize_url => '/oauth/v2/authenticate',
-                        :token_url => '/oauth/v2/token'
+                        :site => 'https://api.meetup.com',
+                        :authorize_url => 'https://secure.meetup.com/oauth2/authorize',
+                        :token_url => 'https://secure.meetup.com/oauth2/access'
                       }
   end
 
@@ -25,34 +25,33 @@ class DwollaAuthenticator < ::Auth::OAuth2Authenticator
     token = URI.escape(auth['credentials']['token'])
     token.gsub!(/\+/, '%2B')
 
-    json = JSON.parse(open("https://www.dwolla.com/oauth/rest/users/?oauth_token=#{token}").read)
-    user = json['Response']
-    result.name = user['Name']
+    user = JSON.parse(open("https://api.meetup.com/oauth2/member/self/?oauth_token=#{token}").read)
+    result.name = user['name']
 
-    current_info = ::PluginStore.get("dwolla", "dwolla_user_#{user['Id']}")
+    current_info = ::PluginStore.get("meetup", "meetup_user_#{user['id']}")
     if current_info
       result.user = User.where(id: current_info[:user_id]).first
     end
-    result.extra_data = { dwolla_user_id: user['Id'] }
+    result.extra_data = { meetup_user_id: user['id'] }
     result
   end
 
   def after_create_account(user, auth)
-    ::PluginStore.set("dwolla", "dwolla_user_#{auth[:extra_data][:dwolla_user_id]}", {user_id: user.id })
+    ::PluginStore.set("meetup", "meetup_user_#{auth[:extra_data][:meetup_user_id]}", {user_id: user.id })
   end
 
 end
 
-auth_provider :title => 'with Dwolla',
-              :authenticator => DwollaAuthenticator.new('dwolla'),
-              :message => 'Authorizing with Dwolla (make sure pop up blockers are not enabled)',
+auth_provider :title => 'with Meetup',
+              :authenticator => MeetupAuthenticator.new('meetup'),
+              :message => 'Authorizing with Meetup (make sure pop up blockers are not enabled)',
               :frame_width => 600,
               :frame_height => 300
 
 register_css <<CSS
 
-  button.btn-social.dwolla {
-    background-color: #d94d00
+  button.btn-social.meetup {
+    background-color: #e0393e
   }
 
 CSS
