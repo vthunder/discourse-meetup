@@ -3,39 +3,24 @@
 # version: 0.1
 # author: Robin Ward, Dan Mills
 
-require_dependency 'auth/oauth2_authenticator'
+require_dependency 'omniauth-meetup'
 
 class MeetupAuthenticator < ::Auth::OAuth2Authenticator
   CLIENT_ID = ENV['MEETUP_APP_ID']
   CLIENT_SECRET = ENV['MEETUP_SECRET']
 
   def register_middleware(omniauth)
-    omniauth.provider :oauth2,
-                      :name => 'meetup',
-                      :client_id => CLIENT_ID,
-                      :client_secret => CLIENT_SECRET,
-                      :scope => 'AccountInfoFull',
-                      :provider_ignores_state => true,
-                      :client_options => {
-                        :site => 'https://api.meetup.com',
-                        :authorize_url => 'https://secure.meetup.com/oauth2/authorize',
-                        :token_url => 'https://secure.meetup.com/oauth2/access'
-                      }
+    omniauth.provider :meetup, ENV['MEETUP_APP_ID'], ENV['MEETUP_SECRET']
   end
 
   def after_authenticate(auth)
     result = Auth::Result.new
-    token = URI.escape(auth['credentials']['token'])
-    token.gsub!(/\+/, '%2B')
-
-    user = JSON.parse(open("https://api.meetup.com/oauth2/member/self/?oauth_token=#{token}").read)
-    result.name = user['name']
-
-    current_info = ::PluginStore.get("meetup", "meetup_user_#{user['id']}")
+    result.name = auth['name']
+    current_info = ::PluginStore.get("meetup", "meetup_user_#{auth['info']['id']}")
     if current_info
       result.user = User.where(id: current_info[:user_id]).first
     end
-    result.extra_data = { meetup_user_id: user['id'] }
+    result.extra_data = { meetup_user_id: auth['info']['id'] }
     result
   end
 
