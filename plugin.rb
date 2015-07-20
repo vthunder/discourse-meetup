@@ -3,11 +3,15 @@
 # version: 0.1
 # author: Robin Ward, Dan Mills
 
-require_dependency 'omniauth/strategies/meetup'
+gem 'omniauth-meetup', '0.0.7'
 
-class MeetupAuthenticator < ::Auth::OAuth2Authenticator
+class MeetupAuthenticator < ::Auth::Authenticator
   CLIENT_ID = ENV['MEETUP_APP_ID']
   CLIENT_SECRET = ENV['MEETUP_SECRET']
+
+  def name()
+    'meetup'
+  end
 
   def register_middleware(omniauth)
     omniauth.provider :meetup, ENV['MEETUP_APP_ID'], ENV['MEETUP_SECRET']
@@ -31,7 +35,7 @@ class MeetupAuthenticator < ::Auth::OAuth2Authenticator
 end
 
 auth_provider :title => 'with Meetup',
-              :authenticator => MeetupAuthenticator.new('meetup'),
+              :authenticator => MeetupAuthenticator.new(),
               :message => 'Authorizing with Meetup (make sure pop up blockers are not enabled)',
               :frame_width => 600,
               :frame_height => 300
