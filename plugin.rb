@@ -3,7 +3,7 @@
 # version: 0.1
 # author: Robin Ward, Dan Mills
 
-require_dependency 'omniauth-meetup'
+require_dependency 'omniauth/strategies/meetup'
 
 class MeetupAuthenticator < ::Auth::OAuth2Authenticator
   CLIENT_ID = ENV['MEETUP_APP_ID']
